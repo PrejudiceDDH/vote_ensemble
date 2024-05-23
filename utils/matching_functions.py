@@ -7,7 +7,6 @@ from ParallelSolve import majority_vote, baggingTwoPhase_woSplit, baggingTwoPhas
 
 def generateW(N, option = None):
     # generate the weight matrix for the maximum weight bipartite matching problem
-    # this script is also used to find good parameters
     # using 0-based index, need N >= 6
     w = {}
     for i in range(N):
