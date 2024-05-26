@@ -58,7 +58,7 @@ def majority_vote(sample_n, B, k, opt_func, rng, *prob_args,varepsilon=None):
     return x_max, list(x_count.keys())
 
 
-############# Algorithms 3 and 4 #############
+############# Algorithm 2 (ReBAG and ReBAG-S) #############
 def solution_evaluation(sample_k, retrieved_solutions, eval_func, *prob_args):
     # output: a numpy array of evaluations of the retrieved solutions
     # assume the problem is a maximization problem
@@ -151,7 +151,7 @@ def get_suboptimality_gap_matrix(sample_n, retrieved_solutions, B2, k, eval_func
 # Note: only Phase I is related to specific algorithms, e.g., SAA, DRO. Phase II is a general solution ranking stage.
 # Note: retrieve_solutions is a list of solutions, so it is ordered
 def baggingTwoPhase_woSplit(sample_n, B1, B2, k, epsilon, tolerance, opt_func, eval_func, rng, *prob_args, varepsilon = None):
-    # implementation of Algorithm 3
+    # implementation of ReBAG
     # epsilon: can either be a numerical value or "dynamic", which stands for using the bisection method to find a proper value
     _, retrieved_solutions = majority_vote(sample_n, B1, k, opt_func, rng, *prob_args, varepsilon=varepsilon)
 
@@ -172,7 +172,7 @@ def baggingTwoPhase_woSplit(sample_n, B1, B2, k, epsilon, tolerance, opt_func, e
     
 
 def baggingTwoPhase_wSplit(sample_n, B1, B2, k, epsilon, tolerance, opt_func, eval_func, rng, *prob_args, varepsilon = None):
-    # implementation of Algorithm 4
+    # implementation of ReBAG-S
     sample_n1 = sample_n[:int(sample_n.shape[0]/2)]
     sample_n2 = sample_n[int(sample_n.shape[0]/2):]
 
@@ -362,7 +362,6 @@ def gurobi_matching_DRO_wasserstein(sample_k, N, w, varepsilon = None):
 
 
 ############# SSKP #############
-
 def prob_simulate_SSKP(n, num_repeats, rng_sample, sample_args, *prob_args):
     # simulate the probability \hat p(x) for a given n
     # the difference from the majority_vote function is that this function uses new samples each time
@@ -553,41 +552,6 @@ def gurobi_network_first_stage(sample_k, s, C,Q_sp, Q_pc, R, M, H):
 
 
 ############# LP problem similar to maximum weight matching #############
-def gurobi_LP(sample_k, N, w, A, seed = 1):
-    # sample_k: k * 6 matrix, where each column corresponds the weight of an edge
-    # N: number of nodes >= 4.
-    # w: dictionary of edge weights, using 1-based index
-    # A: some matrices of dimension N * N, used to destroy the total unimodularity, stored as a numpy matrix
-    ind = 0
-    sample_mean = np.mean(sample_k, axis=0)
-    for i in range(1,4):
-        for j in range(i+1, 5):
-            w[(i,j)] = sample_mean[ind]
-            ind += 1
-    
-    model = Model("max_weight_matching")
-    model.setParam(GRB.Param.OutputFlag, 0) # suppress gurobi output
-    model.setParam("Method", 0)
-    # set seed
-    model.setParam("Seed", seed)
-    edges = [(i, j) for i in range(1, N) for j in range(i + 1, N + 1)]
-    x = model.addVars(edges, vtype=GRB.CONTINUOUS, lb=0, ub=1, name="x")
-    
-    model.setObjective(quicksum(w[e] * x[e] for e in edges), GRB.MAXIMIZE)
-
-    model.addConstrs(quicksum(A[i-1, j-1] * x[(min(i, j), max(i, j))] for j in range(1, N+1) if i != j) <= 1 for i in range(1, N+1))
-
-    model.optimize()
-
-    if model.status == GRB.OPTIMAL:
-        x_opt = np.array([x[e].X for e in edges])
-        return x_opt #, x.keys()
-    else:
-        print("No optimal solution found.")
-        return None   
-
-
-
 def gurobi_LP_full_random(sample_k, N, w, A, seed = 1, exact = False):
     # sample_k: k * N * (N-1)/2 matrix, where each column corresponds the weight of an edge
     # N: number of nodes >= 4.

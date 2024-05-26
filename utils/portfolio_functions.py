@@ -13,7 +13,6 @@ def portfolio_evalute_wSol(sample_n, x, p, mu, b, alpha):
     return -cvar, x
 
 
-
 def comparison_twoPhase(B_list, k_list, B12_list, epsilon, tolerance, number_of_iterations,sample_number,rng_sample, rng_alg, sample_args, *prob_args):
     # prob_args includes p, mu, b, alpha
     SAA_list = []
@@ -125,77 +124,3 @@ def evaluation_twoPhase(SAA_list, bagging_alg1_list, bagging_alg3_list, bagging_
 
     return SAA_obj_list, SAA_obj_avg, bagging_alg1_obj_list, bagging_alg1_obj_avg, bagging_alg3_obj_list, bagging_alg3_obj_avg, bagging_alg4_obj_list, bagging_alg4_obj_avg
     
-
-
-def portfolio_prob_comparison(B_list, k_list, B12_list, epsilon, tolerance, sample_number, large_number_sample, number_of_iterations, rng_sample, rng_alg, sample_args, *prob_args):
-    sample_large = genSample_portfolio(large_number_sample, rng_sample, type = sample_args['type'], params = sample_args['params'])
-    SAA, _ = majority_vote(sample_large, 1, large_number_sample, gurobi_portfolio, rng_alg, *prob_args)
-    x_star = str(SAA) if type(SAA) == int else str(tuple(int(entry) for entry in SAA))
-    print(f"Optimal solution: {x_star}")
-
-    SAA_prob_opt_list = []
-    SAA_prob_dist_list = []
-    baggingAlg1_prob_opt_list = [[ [] for _ in range(len(k_list)) ] for _ in range(len(B_list))]
-    baggingAlg1_prob_dist_list = [[ [] for _ in range(len(k_list)) ] for _ in range(len(B_list))]
-    baggingAlg3_prob_opt_list = [[ [] for _ in range(len(k_list)) ] for _ in range(len(B12_list))]
-    baggingAlg3_prob_dist_list = [[ [] for _ in range(len(k_list)) ] for _ in range(len(B12_list))]
-    baggingAlg4_prob_opt_list = [[ [] for _ in range(len(k_list)) ] for _ in range(len(B12_list))]
-    baggingAlg4_prob_dist_list = [[ [] for _ in range(len(k_list)) ] for _ in range(len(B12_list))]
-
-    for n in sample_number:
-        SAA_count = {}
-        baggingAlg1_count = {}
-        baggingAlg3_count = {}
-        baggingAlg4_count = {}
-        for k in k_list:
-            for B in B_list:
-                baggingAlg1_count[str((B,k))] = {}
-            for B1, B2 in B12_list:
-                baggingAlg3_count[str((B1,B2,k))] = {}
-                baggingAlg4_count[str((B1,B2,k))] = {}
-        
-        tic1 = time.time()
-        for iter in range(number_of_iterations):
-            tic2 = time.time()
-            sample_n = genSample_portfolio(n, rng_sample, type = sample_args['type'], params = sample_args['params'])
-            SAA, _ = majority_vote(sample_n, 1, n, gurobi_portfolio, rng_alg, *prob_args)
-            SAA = str(SAA) if type(SAA) == int else str(tuple(int(entry) for entry in SAA))
-            SAA_count[SAA] = SAA_count.get(SAA, 0) + 1/number_of_iterations
-            
-            for k in k_list:
-                for B in B_list:
-                    if k < 1:
-                        baggingAlg1, _ = majority_vote(sample_n, B, int(n*k), gurobi_portfolio, rng_alg, *prob_args)
-                    else:
-                        baggingAlg1, _ = majority_vote(sample_n, B, k, gurobi_portfolio, rng_alg, *prob_args)
-                    baggingAlg1 = str(baggingAlg1) if type(baggingAlg1) == int else str(tuple(int(entry) for entry in baggingAlg1))
-                    baggingAlg1_count[str((B,k))][baggingAlg1] = baggingAlg1_count[str((B,k))].get(baggingAlg1, 0) + 1/number_of_iterations
-                for B1, B2 in B12_list:
-                    if k < 1:
-                        baggingAlg3, _, _, _ = baggingTwoPhase_woSplit(sample_n, B1, B2, int(n*k), epsilon, tolerance, gurobi_portfolio, portfolio_evalute_wSol, rng_alg, *prob_args)
-                        baggingAlg4, _, _, _ = baggingTwoPhase_wSplit(sample_n, B1, B2, int(n*k), epsilon, tolerance, gurobi_portfolio, portfolio_evalute_wSol, rng_alg, *prob_args)
-                    else:
-                        baggingAlg3, _, _, _ = baggingTwoPhase_woSplit(sample_n, B1, B2, k, epsilon, tolerance, gurobi_portfolio, portfolio_evalute_wSol, rng_alg, *prob_args)
-                        baggingAlg4, _, _, _ = baggingTwoPhase_wSplit(sample_n, B1, B2, k, epsilon, tolerance, gurobi_portfolio, portfolio_evalute_wSol, rng_alg, *prob_args)
-                    
-                    baggingAlg3 = str(baggingAlg3) if type(baggingAlg3) == int else str(tuple(int(entry) for entry in baggingAlg3))
-                    baggingAlg4 = str(baggingAlg4) if type(baggingAlg4) == int else str(tuple(int(entry) for entry in baggingAlg4))
-
-                    baggingAlg3_count[str((B1,B2,k))][baggingAlg3] = baggingAlg3_count[str((B1,B2,k))].get(baggingAlg3, 0) + 1/number_of_iterations
-                    baggingAlg4_count[str((B1,B2,k))][baggingAlg4] = baggingAlg4_count[str((B1,B2,k))].get(baggingAlg4, 0) + 1/number_of_iterations
-            print(f"Sample size {n}, iteration {iter}, time: {time.time()-tic2}")
-
-        SAA_prob_opt_list.append(SAA_count.get(x_star, 0))
-        SAA_prob_dist_list.append(SAA_count)
-        for ind2, k in enumerate(k_list):
-            for ind1, B in enumerate(B_list):
-                baggingAlg1_prob_opt_list[ind1][ind2].append(baggingAlg1_count[str((B,k))].get(x_star, 0))
-                baggingAlg1_prob_dist_list[ind1][ind2].append(baggingAlg1_count[str((B,k))])
-            for ind1, (B1,B2) in enumerate(B12_list):
-                baggingAlg3_prob_opt_list[ind1][ind2].append(baggingAlg3_count[str((B1,B2,k))].get(x_star, 0))
-                baggingAlg3_prob_dist_list[ind1][ind2].append(baggingAlg3_count[str((B1,B2,k))])
-                baggingAlg4_prob_opt_list[ind1][ind2].append(baggingAlg4_count[str((B1,B2,k))].get(x_star, 0))
-                baggingAlg4_prob_dist_list[ind1][ind2].append(baggingAlg4_count[str((B1,B2,k))])
-        print(f"Sample size {n}, total time: {time.time()-tic1}")
-
-    return SAA_prob_opt_list, SAA_prob_dist_list, baggingAlg1_prob_opt_list, baggingAlg1_prob_dist_list, baggingAlg3_prob_opt_list, baggingAlg3_prob_dist_list, baggingAlg4_prob_opt_list, baggingAlg4_prob_dist_list

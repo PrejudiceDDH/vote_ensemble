@@ -3,49 +3,6 @@ from scipy import stats
 import numpy as np
 
 
-def plot_final(SAA_obj_avg, bagging_obj_avg, sample_number, B_list, k_list):
-    _, ax = plt.subplots()
-    ax.plot(sample_number, SAA_obj_avg, marker = 'o', markeredgecolor = 'none', color = 'blue',linestyle = 'solid', linewidth = 2, label = 'SAA')
-    for ind1, B in enumerate(B_list):
-        for ind2, k in enumerate(k_list):
-            if B == "X" or k == "X":
-                continue
-            ax.plot(sample_number, bagging_obj_avg[ind1][ind2], marker = 's', markeredgecolor = 'none', linestyle = 'solid', linewidth = 2, label = f'B={B_list[ind1]}, k={k_list[ind2]}')
-    ax.set_xlabel('Number of samples', size = 20)
-    ax.set_ylabel('Objective', size = 20)
-    ax.legend()
-    fig_name  = "obj_avg_" + str(B_list) + '_' +str(k_list) + ".png"
-    plt.savefig(fig_name)
-    # plt.show()
-    return
-
-def plot_CI_final(SAA_obj_list, bagging_obj_list, sample_number, B_list, k_list):
-    number_of_iterations = len(SAA_obj_list[0])
-    _, ax = plt.subplots()
-    for ind1, B in enumerate(B_list):
-        for ind2, k in enumerate(k_list):
-            if B == "X" or k == "X":
-                continue
-            diff_Bk = []
-            for i in range(len(sample_number)):
-                diff_Bk.append([bagging_obj_list[ind1][ind2][i][j] - SAA_obj_list[i][j] for j in range(number_of_iterations)])
-            
-            diff_Bk_mean = np.mean(diff_Bk, axis = 1)
-            diff_Bk_std_err = stats.sem(diff_Bk, axis = 1)
-            diff_conf_int = 1.96 * diff_Bk_std_err
-
-            ax.plot(sample_number, diff_Bk_mean, marker = 's', markeredgecolor = 'none', linestyle = 'solid', linewidth = 2, label = f'B={B}, k={k}')
-            ax.fill_between(sample_number, diff_Bk_mean - diff_conf_int, diff_Bk_mean + diff_conf_int, alpha = 0.2)
-    
-    ax.axhline(0, color='grey', linewidth=2, linestyle='--') 
-    ax.set_xlabel('Number of samples', size = 20)
-    ax.set_ylabel('Objective difference', size = 20)
-    ax.legend()
-    fig_name  = "obj_CI_" + str(B_list) + '_' + str(k_list) + ".png"
-    plt.savefig(fig_name)
-    # plt.show()
-    return
-
 def plot_optGap_twoPhase(obj_opt, minmax, SAA_obj_avg, bagging_alg1_obj_avg, bagging_alg3_obj_avg, bagging_alg4_obj_avg, sample_number, B_list, k_list, B12_list, name = None):
     # minmax: specify whether the problem is minimization/maximization
     _, ax = plt.subplots()
@@ -76,35 +33,6 @@ def plot_optGap_twoPhase(obj_opt, minmax, SAA_obj_avg, bagging_alg1_obj_avg, bag
         fig_name = "opt_gap_" + str(B_list) + '_' +str(k_list) + '_' + str(B12_list) + ".png"
     else:
         fig_name = name + "_opt_gap" + ".png"
-    plt.savefig(fig_name)
-    return
-
-def plot_optTime_twoPhase(obj_opt, SAA_obj_list, bagging_alg1_obj_list, bagging_alg3_obj_list, bagging_alg4_obj_list, sample_number, B_list, k_list, B12_list):
-    _, ax = plt.subplots()
-    number_of_iterations = len(SAA_obj_list[0])
-    # count number of times the optimal objective is achieved
-    SAA_opt_times  = [ sum([1 for obj in obj_list if abs(obj - obj_opt) < 1e-6])/number_of_iterations for obj_list in SAA_obj_list ]
-    ax.plot(sample_number, SAA_opt_times, marker = 'o', markeredgecolor = 'none', color = 'blue',linestyle = 'solid', linewidth = 2, label = 'SAA')
-    for ind1, B in enumerate(B_list):
-        for ind2, k in enumerate(k_list):
-            if B == "X" or k == "X":
-                continue
-            bagging_opt_times = [sum([1 for obj in obj_list if abs(obj - obj_opt) < 1e-6])/number_of_iterations for obj_list in bagging_alg1_obj_list[ind1][ind2]]
-            ax.plot(sample_number, bagging_opt_times, marker = 's', markeredgecolor = 'none', linestyle = 'solid', linewidth = 2, label = f'Alg1, B={B_list[ind1]}, k={k_list[ind2]}')
-    
-    for ind1, B12 in enumerate(B12_list):
-        for ind2, k in enumerate(k_list):
-            if B12 == "X" or k == "X":
-                continue
-            bagging_opt_times = [sum([1 for obj in obj_list if abs(obj - obj_opt) < 1e-6])/number_of_iterations for obj_list in bagging_alg3_obj_list[ind1][ind2]]
-            ax.plot(sample_number, bagging_opt_times, marker = 's', markeredgecolor = 'none', linestyle = 'solid', linewidth = 2, label = f'Alg3, B12={B12_list[ind1]}, k={k_list[ind2]}')
-            bagging_opt_times = [sum([1 for obj in obj_list if abs(obj - obj_opt) < 1e-6])/number_of_iterations for obj_list in bagging_alg4_obj_list[ind1][ind2]]
-            ax.plot(sample_number, bagging_opt_times, marker = 's', markeredgecolor = 'none', linestyle = 'solid', linewidth = 2, label = f'Alg4, B12={B12_list[ind1]}, k={k_list[ind2]}')
-    
-    ax.set_xlabel('Number of samples', size = 20)
-    ax.set_ylabel('Optimal Achieved Ratio', size = 20)
-    ax.legend(fontsize = 'small')
-    fig_name = "opt_time_" + str(B_list) + '_' +str(k_list) + '_' + str(B12_list) + ".png"
     plt.savefig(fig_name)
     return
 
@@ -313,21 +241,6 @@ def plot_CI_epsilonComparison(SAA_obj_list, bagging_alg1_obj_list, bagging_alg3_
     return
 
 
-def plot_params(SAA_obj_avg, bagging_alg3_obj_avg, bagging_alg4_obj_avg, sample_number, B12_list, k_list, name):
-    _, ax = plt.subplots()
-    for ind1, B12 in enumerate(B12_list):
-        for ind2, k in enumerate(k_list):
-            if B12 == "X" or k == "X":
-                continue
-            ax.plot(sample_number, [bagging_alg3_obj_avg[ind1][ind2][i] - SAA_obj_avg[i] for i in range(len(sample_number))], marker = 's', markeredgecolor = 'none', linestyle = 'solid', linewidth = 2, label = f'Alg3, B12={B12_list[ind1]}, k={k_list[ind2]}')
-            ax.plot(sample_number, [bagging_alg4_obj_avg[ind1][ind2][i] - SAA_obj_avg[i] for i in range(len(sample_number))], marker = 's', markeredgecolor = 'none', linestyle = 'solid', linewidth = 2, label = f'Alg4, B12={B12_list[ind1]}, k={k_list[ind2]}')
-    ax.set_xlabel('Number of samples', size = 20)
-    ax.set_ylabel('Objective difference', size = 20)
-    ax.legend(fontsize = 'small')
-    fig_name = name + ".png"
-    plt.savefig(fig_name)
-    return
-
 def plot_droComparison(SAA_obj_avg, dro_wasserstein_obj_avg, bagging_alg1_obj_avg, bagging_alg3_obj_avg, bagging_alg4_obj_avg, sample_number, B_list, k_list, B12_list, varepsilon_list, name = None):
     _, ax = plt.subplots()
     ax.plot(sample_number, SAA_obj_avg, marker = 'o', markeredgecolor = 'none', color = 'blue',linestyle = 'solid', linewidth = 2, label = 'SAA')
@@ -427,6 +340,7 @@ def plot_CI_droComparison(SAA_obj_list, dro_wasserstein_obj_list, bagging_alg1_o
     plt.savefig(fig_name)
     return
 
+
 def plot_optGap_droComparison(obj_opt, minmax, SAA_obj_avg, dro_wasserstein_obj_avg, bagging_alg1_obj_avg, bagging_alg3_obj_avg, bagging_alg4_obj_avg, sample_number, B_list, k_list, B12_list, varepsilon_list):
     # minmax: specify whether the problem is minimization/maximization
     _, ax = plt.subplots()
@@ -499,66 +413,5 @@ def plot_CI_many_methods(obj_list_dicts, sample_number):
     ax.set_xlabel('Number of samples', size = 20)
     ax.set_ylabel('Objective Difference', size = 20)
     ax.legend(fontsize = 'small')
-    plt.savefig(fig_name)
-    return
-
-
-def plot_test(SAA_obj_avg, bagging_alg3_obj_avg, bagging_alg3_trick_obj_avg, sample_number, k_list, B1_list, name = None):
-    _, ax = plt.subplots()
-    ax.plot(sample_number, SAA_obj_avg, marker = 'o', markeredgecolor = 'none', color = 'blue',linestyle = 'solid', linewidth = 2, label = 'SAA')
-    for ind1, B1 in enumerate(B1_list):
-        for ind2, k in enumerate(k_list):
-            if B1 == "X" or k == "X":
-                continue
-            ax.plot(sample_number, bagging_alg3_obj_avg[ind1][ind2], marker = 's', markeredgecolor = 'none', linestyle = 'solid', linewidth = 2, label = f'Alg3, B1={B1_list[ind1]}, k={k_list[ind2]}')
-            ax.plot(sample_number, bagging_alg3_trick_obj_avg[ind1][ind2], marker = 's', markeredgecolor = 'none', linestyle = 'solid', linewidth = 2, label = f'Alg3_trick, B1={B1_list[ind1]}, k={k_list[ind2]}')
-    
-    ax.set_xlabel('Number of samples', size = 20)
-    ax.set_ylabel('Objective', size = 20)
-    ax.legend(fontsize = 'small')
-    if name == None:
-        fig_name = "obj_avg_" + str(B1_list) + '_' +str(k_list) + ".png"
-    else:
-        fig_name = name + "_obj_avg" + ".png"
-    plt.savefig(fig_name)
-    return
-
-def plot_CI_test(SAA_obj_list, bagging_alg3_obj_list, bagging_alg3_trick_obj_list, sample_number, k_list, B1_list, name = None):
-    number_of_iterations = len(SAA_obj_list[0])
-    _, ax = plt.subplots()
-    for ind1, B1 in enumerate(B1_list):
-        for ind2, k in enumerate(k_list):
-            if B1 == "X" or k == "X":
-                continue
-            diff_Bk = []
-            for i in range(len(sample_number)):
-                diff_Bk.append([bagging_alg3_obj_list[ind1][ind2][i][j] - SAA_obj_list[i][j] for j in range(number_of_iterations)])
-            
-            diff_Bk_mean = np.mean(diff_Bk, axis = 1)
-            diff_Bk_std_err = stats.sem(diff_Bk, axis = 1)
-            diff_conf_int = 1.96 * diff_Bk_std_err
-
-            ax.plot(sample_number, diff_Bk_mean, marker = 's', markeredgecolor = 'none', linestyle = 'solid', linewidth = 2, label = f'Alg3, B1={B1}, k={k}')
-            ax.fill_between(sample_number, diff_Bk_mean - diff_conf_int, diff_Bk_mean + diff_conf_int, alpha = 0.2)
-            
-            diff_Bk = []
-            for i in range(len(sample_number)):
-                diff_Bk.append([bagging_alg3_trick_obj_list[ind1][ind2][i][j] - SAA_obj_list[i][j] for j in range(number_of_iterations)])
-            
-            diff_Bk_mean = np.mean(diff_Bk, axis = 1)
-            diff_Bk_std_err = stats.sem(diff_Bk, axis = 1)
-            diff_conf_int = 1.96 * diff_Bk_std_err
-
-            ax.plot(sample_number, diff_Bk_mean, marker = 's', markeredgecolor = 'none', linestyle = 'solid', linewidth = 2, label = f'Alg3_trick, B1={B1}, k={k}')
-            ax.fill_between(sample_number, diff_Bk_mean - diff_conf_int, diff_Bk_mean + diff_conf_int, alpha = 0.2)
-    
-    ax.axhline(0, color='grey', linewidth=2, linestyle='--') 
-    ax.set_xlabel('Number of samples', size = 20)
-    ax.set_ylabel('Objective Difference', size = 20)
-    ax.legend(fontsize = 'small')
-    if name == None:
-        fig_name = "obj_CI_" + str(B1_list) + '_' + str(k_list) + ".png"
-    else:
-        fig_name = name + "_obj_CI" + ".png"
     plt.savefig(fig_name)
     return
