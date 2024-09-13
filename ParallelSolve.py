@@ -297,6 +297,10 @@ def baggingTwoPhase_wSplit_LP(sample_n, B1, B2, k, epsilon, tolerance, opt_func,
     return x_max, suboptimality_gap_matrix_n2, retrieved_solutions, epsilon
 
 
+######################################################
+############# Problem-specific functions #############
+######################################################
+
 ############# Maximum weight bipartite matching #############
 def gurobi_matching(sample_k, N, w):
     # maximum weight bipartite matching

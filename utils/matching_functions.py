@@ -3,7 +3,7 @@ import numpy as np
 from utils.generateSamples import genSample_SSKP
 from ParallelSolve import majority_vote, baggingTwoPhase_woSplit, baggingTwoPhase_wSplit, gurobi_matching, gurobi_matching_DRO_wasserstein
 
-
+# generate weight matrix for the matching problem
 def generateW(N, option = None):
     # generate the weight matrix for the maximum weight bipartite matching problem
     # using 0-based index, need N >= 6
@@ -27,7 +27,7 @@ def generateW(N, option = None):
     return w
 
 def matching_obj_optimal(sample_args, N, w):
-    # computes the optimal objective value
+    # computes the optimal objective value (no randomness)
     if sample_args['type'] == 'pareto' or sample_args['type'] == 'sym_pareto' or sample_args['type'] == 'neg_pareto':
         sample_mean = np.reshape([item/(item-1) for item in sample_args['params']], (1, len(sample_args['params'])))
     elif sample_args['type'] == 'normal':
@@ -38,7 +38,7 @@ def matching_obj_optimal(sample_args, N, w):
     
 
 def matching_evaluate_exact(sample_args, x, N, w):
-    # evaluate the objective value of a given solution
+    # evaluate the objective value of a given solution (no randomness)
     # x is the solution, represented as a tuple
     # first, retrieve the sample mean and fill the None values in w
     if sample_args['type'] == 'pareto' or sample_args['type'] == 'sym_pareto' or sample_args['type'] == 'neg_pareto':
