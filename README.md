@@ -71,6 +71,6 @@ This repository provides the official code for the paper "Subsampled Ensemble Ca
 
 ## Data and Figures
 
-- **plot_results_iclr/**: Contains data and parameters corresponding to the figures in the paper.
-  - **plotting_iclr.ipynb**: Contains all scripts for generating figures.
+- **plot_results/**: Contains data and parameters corresponding to the figures in the paper.
+  - **plotting.ipynb**: Contains all scripts for generating figures.
   - Subfolders store the specific data for each figure.
